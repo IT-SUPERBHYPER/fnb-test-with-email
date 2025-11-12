@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNB Fleet Cards Record</title>
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.png" sizes="192x192">
+    <style>
+        /* General styles */
+        * {margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Arial',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px;}
+        .container{max-width:800px;margin:0 auto;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,0.1);overflow:hidden;}
+        /* Header */
+        .header{background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);color:white;padding:30px;text-align:center;position:relative;}
+        .header::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="30" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="30" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');pointer-events:none;}
+        .header h1{font-size:2.5em;font-weight:700;margin-bottom:10px;position:relative;z-index:1;}
+        .header p{font-size:1.1em;opacity:0.9;position:relative;z-index:1;}
+        /* Form & Content Containers */
+        .form-container{padding:40px;}
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;margin-bottom:30px;}
+        .form-group{position:relative;}
+        .form-group label{display:block;margin-bottom:8px;font-weight:600;color:#333;font-size:1em;text-transform:uppercase;letter-spacing:0.5px;}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:18px;border:2px solid #e1e8ed;border-radius:10px;font-size:1em;background:rgba(255,255,255,0.9);transition:all 0.3s ease;outline:none;}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.1);transform:translateY(-2px);}
+        .form-group input[type="datetime-local"]{font-family:inherit;}
+        .fuel-amount{position:relative;}
+        .fuel-amount::before{content:'R';position:absolute;left:15px;top:50%;transform:translateY(-50%);font-weight:bold;color:#667eea;z-index:1;}
+        .fuel-amount input{padding-left:35px;}
+        /* Section Headers */
+        .section-header{background:linear-gradient(135deg,#2c5282 0%,#3182ce 100%);color:white;padding:20px;margin:30px -40px;border-radius:15px;text-align:center;box-shadow:0 5px 15px rgba(44,82,130,0.3); cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
+        .section-header h2{font-size:1.5em;margin:0;font-weight:600;}
+        .section-header:first-child{margin-top:0;}
+        /* Accordion caret */
+        .section-header .caret {
+            font-size: 1.5em;
+            transition: transform 0.3s ease;
+        }
+        .section-header.active .caret {
+            transform: rotate(90deg);
+        }
+        /* Collapsible content */
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 20px;
+            background: rgba(248,250,252,0.8);
+            border-radius: 0 0 15px 15px;
+            border: 2px solid #e2e8f0;
+            border-top: none;
+            margin: 0 -40px;
+        }
+        .collapsible-content.active {
+            max-height: 1000px;
+            padding: 20px 40px;
+        }
+        .collapsible-content form {
+            padding: 0;
+            margin-bottom: 0;
+        }
+        .collapsible-content .submit-section {
+            margin-bottom: 0;
+        }
+        /* Specific section styles */
+        .out-records,.in-records{margin-top:30px;padding:20px;background:rgba(248,250,252,0.8);border-radius:15px;border:2px solid #e2e8f0;}
+        .out-records h3,.in-records h3{color:#2c5282;margin-bottom:15px;font-size:1.2em;}
+        /* Status Badges */
+        .status-badge{padding:5px 12px;border-radius:20px;font-size:0.8em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+        .status-out{background:#fed7d7;color:#c53030;}
+        .status-complete{background:#c6f6d5;color:#2f855a;}
+        /* Submit Button */
+        .submit-section{text-align:center;margin-top:40px;}
+        .submit-btn{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px 45px;border:none;border-radius:50px;font-size:1.1em;font-weight:600;cursor:pointer;transition:all 0.3s ease;text-transform:uppercase;letter-spacing:1px;box-shadow:0 10px 30px rgba(102,126,234,0.3);}
+        .submit-btn:hover{transform:translateY(-3px);box-shadow:0 15px 40px rgba(102,126,234,0.4);}
+        .submit-btn:active{transform:translateY(-1px);}
+        /* Records Tables */
+        .records-section{margin-top:50px;padding-top:30px;border-top:2px solid #e1e8ed;}
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 20px;
+        }
+        .records-table{width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+        .records-table th,.records-table td{padding:16px;text-align:left;border-bottom:1px solid #e1e8ed;font-size:0.95em;}
+        .records-table th{background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);color:white;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+        .records-table tr:hover{background:rgba(102,126,234,0.05);}
+        .empty-table-message {
+            text-align: center;
+            padding: 25px;
+            color: #777;
+            font-style: italic;
+            font-size: 1.1em;
+        }
+        /* Icons & Data Tools */
+        .icon{display:inline-block;margin-right:8px;opacity:0.7;}
+        .data-tools{text-align:right;margin-top:10px;margin-bottom:-10px;}
+        .data-tools button{background:linear-gradient(135deg,#2c5282 0%,#3182ce 100%);color:#fff;border:none;border-radius:20px;padding:12px 20px;font-size:0.98em;font-weight:600;margin-left:8px;cursor:pointer;transition:background 0.3s;}
+        .data-tools button:hover{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);}
+        /* Stats Panel */
+        .stats-panel {
+          display: flex; flex-wrap: wrap; gap: 18px; margin: 25px 0 32px 0; justify-content: center;
+        }
+        .stat-card {
+          background: linear-gradient(135deg,#e9e9fd 60%,#f6eafc 100%);
+          border-radius: 18px;
+          padding: 18px 22px;
+          box-shadow: 0 4px 12px rgba(80, 110, 200, 0.11);
+          min-width: 140px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .stat-icon {
+          font-size: 2em;
+          margin-bottom: 7px;
+          opacity: 0.86;
+        }
+        .stat-value {
+          font-size: 1.45em;
+          font-weight: bold;
+          color: #34387a;
+        }
+        .stat-label {
+          font-size: 0.96em;
+          color: #595b7a;
+          margin-top: 2px;
+          text-align: center;
+        }
+        /* Modal Styles */
+        .modal {
+            display:none;position:fixed;z-index:999;left:0;top:0;width:100vw;height:100vh;
+            background:rgba(30,44,74,0.45);justify-content:center;align-items:center;
+        }
+        .modal-content {
+            background:#fff;padding:32px 28px 20px 28px;border-radius:14px;max-width:340px;text-align:center;
+            box-shadow:0 2px 16px rgba(30,44,74,0.20);
+        }
+        .modal-content input[type="password"], .modal-content input[type="email"] {
+            width:90%;padding:12px;margin:18px 0 20px 0;border:1.5px solid #ddd;border-radius:8px;font-size:1.08em;
+        }
+        .modal-content button {
+            background:linear-gradient(135deg,#2c5282 0%,#3182ce 100%);color:#fff;border:none;border-radius:18px;
+            padding:9px 22px;font-size:1em;font-weight:600;margin:0 8px;cursor:pointer;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .modal-content button:hover {background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);}
+        .modal-content .error {color:#c53030;font-size:0.96em;margin-bottom:8px;}
+        .show-stats-btn {
+            background:linear-gradient(135deg,#2c5282 0%,#3182ce 100%);
+            color:#fff;border:none;border-radius:20px;padding:12px 20px;font-size:0.98em;font-weight:600;cursor:pointer;transition:background 0.3s; margin-bottom:16px;
+            display: none; /* Hidden since we use email-based admin */
+        }
+        /* Error message for fuel amount */
+        .fuel-error {
+            color: #c53030;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: none;
+        }
+        /* Mileage hint */
+        .mileage-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            display: block;
+        }
+        /* Mobile Specific Optimizations */
+        @media (max-width: 768px) {
+            body {padding: 10px;}
+            .container {border-radius: 10px;}
+            .form-container {padding: 15px;}
+            .header {padding: 20px;}
+            .header h1 {font-size: 1.8em;}
+            .header p {font-size: 1em;}
+            .form-grid {grid-template-columns: 1fr; gap: 20px;}
+            .section-header {margin: 20px -15px; padding: 15px;}
+            .section-header h2 {font-size: 1.3em;}
+            /* Table to Card Transformation */
+            .records-table, .records-table thead, .records-table tbody, .records-table th, .records-table td, .records-table tr {
+                display: block;
+                width: 100%;
+            }
+            .records-table thead {
+                display: none;
+            }
+            .records-table tr {
+                margin-bottom: 15px;
+                border: 1px solid #e1e8ed;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                overflow: hidden;
+            }
+            .records-table td {
+                text-align: right;
+                padding-left: 50%;
+                position: relative;
+                border-bottom: 1px dashed #e1e8ed;
+                font-size: 0.9em;
+            }
+            .records-table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: #555;
+            }
+            #outRecordsTable td:nth-of-type(1)::before { content: "Vehicle Reg.:"; }
+            #outRecordsTable td:nth-of-type(2)::before { content: "Driver:"; }
+            #outRecordsTable td:nth-of-type(3)::before { content: "Date/Time Out:"; }
+            #outRecordsTable td:nth-of-type(4)::before { content: "Status:"; }
+            #inRecordsTable td:nth-of-type(1)::before { content: "Vehicle Reg.:"; }
+            #inRecordsTable td:nth-of-type(2)::before { content: "Driver:"; }
+            #inRecordsTable td:nth-of-type(3)::before { content: "Date Out:"; }
+            #inRecordsTable td:nth-of-type(4)::before { content: "Date In:"; }
+            #inRecordsTable td:nth-of-type(5)::before { content: "Distance Traveled:"; }
+            #inRecordsTable td:nth-of-type(6)::before { content: "Fuel Amount:"; }
+            .records-table td:last-child {
+                border-bottom: 0;
+            }
+            .data-tools button, .show-stats-btn {
+                width: 100%;
+                margin-left: 0;
+                margin-bottom: 10px;
+            }
+            .data-tools {
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 20px;
+            }
+            .stats-panel {
+                gap: 10px;
+                margin: 15px 0 20px 0;
+            }
+            .stat-card {
+                min-width: 100px;
+                padding: 10px 5px;
+            }
+            .stat-icon {
+                font-size: 1.5em;
+            }
+            .stat-value {
+                font-size: 1.1em;
+            }
+            .stat-label {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🚗 FNB Fleet Cards Record</h1>
+        <p>Vehicle Usage & Fuel Tracking System</p>
+    </div>
+    <div class="form-container">
+        <div class="collapsible-section">
+            <div class="section-header" id="statsHeader">
+                <h2>📊 Stats & Admin Tools</h2>
+                <span class="caret">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="stats-panel" id="statsPanel" style="display:none"></div>
+                <div class="data-tools">
+                    <button id="exportCsvBtn">Export CSV</button>
+                    <button id="clearAllBtn">Clear All Data</button>
+                </div>
+            </div>
+        </div>
+        <div class="collapsible-section">
+            <div class="section-header" id="checkoutHeader">
+                <h2>🚗 Vehicle Check Out</h2>
+                <span class="caret">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <form id="vehicleOutForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cardRegistrationOut"><span class="icon">💳</span>Vehicle Registration</label>
+                            <input type="text" id="cardRegistrationOut" name="cardRegistrationOut" required placeholder="Enter Vehicle registration number">
+                        </div>
+                        <div class="form-group">
+                            <label for="driverNameOut"><span class="icon">👤</span>Name of Driver</label>
+                            <input type="text" id="driverNameOut" name="driverNameOut" required placeholder="Enter driver's full name">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="dateTimeOut"><span class="icon">🕐</span>Date & Time Out</label>
+                            <input type="datetime-local" id="dateTimeOut" name="dateTimeOut" required>
+                        </div>
+                    </div>
+                    <div class="submit-section">
+                        <button type="submit" class="submit-btn">🚗 Check Out Vehicle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="collapsible-section">
+            <div class="section-header" id="checkinHeader">
+                <h2>🏠 Vehicle Check In</h2>
+                <span class="caret">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <form id="vehicleInForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cardRegistrationIn"><span class="icon">💳</span>Vehicle Registration</label>
+                            <select id="cardRegistrationIn" name="cardRegistrationIn" required>
+                                <option value="">Select Vehicle Registration</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="driverNameIn"><span class="icon">👤</span>Driver Name</label>
+                            <input type="text" id="driverNameIn" name="driverNameIn" readonly placeholder="Auto-filled from checkout">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="mileageIn"><span class="icon">📊</span>Mileage In (km)</label>
+                            <input type="number" id="mileageIn" name="mileageIn" placeholder="0" min="0" step="0.1">
+                            <span id="mileageHint" class="mileage-hint" style="display:none;"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dateTimeIn"><span class="icon">🕐</span>Date & Time In</label>
+                            <input type="datetime-local" id="dateTimeIn" name="dateTimeIn" required>
+                        </div>
+                    </div>
+                    <div class="form-group fuel-amount">
+                        <label for="fuelAmount"><span class="icon">⛽</span>Fuel Slip Amount (Max: R2500)</label>
+                        <input type="number" id="fuelAmount" name="fuelAmount" placeholder="0.00" min="0" max="2500" step="0.01">
+                        <div id="fuelAmountError" class="fuel-error">Fuel amount cannot exceed R2500</div>
+                    </div>
+                    <div class="submit-section">
+                        <button type="submit" class="submit-btn">🏠 Check In Vehicle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="collapsible-section">
+            <div class="section-header" id="outRecordsHeader">
+                <h3>🚗 Vehicles Currently Out</h3>
+                <span class="caret">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="table-responsive">
+                    <table class="records-table" id="outRecordsTable">
+                        <thead>
+                            <tr>
+                                <th>Vehicle Reg.</th>
+                                <th>Driver</th>
+                                <th>Date/Time Out</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="outRecordsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="collapsible-section">
+            <div class="section-header" id="inRecordsHeader">
+                <h3>🏠 Completed Trips</h3>
+                <span class="caret">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="table-responsive">
+                    <table class="records-table" id="inRecordsTable">
+                        <thead>
+                            <tr>
+                                <th>Vehicle Reg.</th>
+                                <th>Driver</th>
+                                <th>Date Out</th>
+                                <th>Date In</th>
+                                <th>Distance Traveled</th>
+                                <th>Fuel Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inRecordsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Login Modal -->
+<div class="modal" id="loginModal">
+    <div class="modal-content">
+        <h2>🔐 Fleet System Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" autocomplete="off">
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="off">
+        <div class="error" id="loginError"></div>
+        <button id="loginBtn">Login</button>
+    </div>
+</div>
+<!-- Export Options Modal -->
+<div class="modal" id="exportModal">
+    <div class="modal-content">
+        <h2>Export Options</h2>
+        <p>Select export type:</p>
+        <button id="exportLifeToDateBtn">Life to Date</button>
+        <button id="exportMonthToDateBtn">Month to Date</button>
+        <button id="exportCancelBtn">Cancel</button>
+    </div>
+</div>
+
+<script type="module">
+  // Firebase imports
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDKpWycZRpAS7uFKfZaQ-un8ojGclndvSU",
+    authDomain: "fnb-fleet-93b54.firebaseapp.com",
+    projectId: "fnb-fleet-93b54",
+    storageBucket: "fnb-fleet-93b54.firebasestorage.app",
+    messagingSenderId: "827624569947",
+    appId: "1:827624569947:web:dc7f6f555435d09e76937e",
+    measurementId: "G-4G15HXFR4S"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // App state
+  let outRecords = [];
+  let completedRecords = [];
+  let isAdmin = false;
+  let currentUser = null;
+
+  // =============== Helper Functions ===============
+  function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('en-ZA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function renderStats() {
+    const statsPanel = document.getElementById('statsPanel');
+    statsPanel.style.display = isAdmin ? '' : 'none';
+    if (!isAdmin) {
+      statsPanel.innerHTML = '';
+      return;
+    }
+    const totalOut = outRecords.length;
+    const totalTrips = completedRecords.length;
+    const totalFuel = completedRecords.reduce((sum, r) => sum + parseFloat(r.fuelAmount || 0), 0);
+    const totalDistanceTraveled = completedRecords.reduce((sum, r) => sum + parseFloat(r.distanceTraveled || 0), 0);
+    const avgFuel = totalTrips ? (totalFuel / totalTrips) : 0;
+    const avgDistanceTraveled = totalTrips ? (totalDistanceTraveled / totalTrips) : 0;
+    let mostRecent = null;
+    if (completedRecords.length) {
+      mostRecent = completedRecords.reduce((a, b) => (a.dateTimeIn > b.dateTimeIn ? a : b));
+    }
+    let driverCounts = {};
+    completedRecords.forEach(r => {
+      driverCounts[r.driverName] = (driverCounts[r.driverName] || 0) + 1;
+    });
+    let mostActiveDriver = null, maxTrips = 0;
+    for (const [driver, count] of Object.entries(driverCounts)) {
+      if (count > maxTrips) {
+        maxTrips = count;
+        mostActiveDriver = driver;
+      }
+    }
+    let html = `
+      <div class="stat-card"><div class="stat-icon">🚗</div>
+        <div class="stat-value">${totalOut}</div>
+        <div class="stat-label">Checked Out</div>
+      </div>
+      <div class="stat-card"><div class="stat-icon">✅</div>
+        <div class="stat-value">${totalTrips}</div>
+        <div class="stat-label">Completed Trips</div>
+      </div>
+      <div class="stat-card"><div class="stat-icon">⛽</div>
+        <div class="stat-value">R${totalFuel.toFixed(2)}</div>
+        <div class="stat-label">Fuel Total</div>
+      </div>
+      <div class="stat-card"><div class="stat-icon">🛣️</div>
+        <div class="stat-value">${totalDistanceTraveled.toFixed(1)} km</div>
+        <div class="stat-label">Distance Total</div>
+      </div>
+      <div class="stat-card"><div class="stat-icon">💸</div>
+        <div class="stat-value">R${avgFuel.toFixed(2)}</div>
+        <div class="stat-label">Avg Fuel/Trip</div>
+      </div>
+      <div class="stat-card"><div class="stat-icon">📊</div>
+        <div class="stat-value">${avgDistanceTraveled.toFixed(1)} km</div>
+        <div class="stat-label">Avg Distance/Trip</div>
+      </div>
+    `;
+    if (mostRecent) {
+      html += `
+      <div class="stat-card"><div class="stat-icon">🕒</div>
+        <div class="stat-value">${mostRecent.driverName}</div>
+        <div class="stat-label">Last Trip<br><small>${mostRecent.cardRegistration}</small></div>
+      </div>
+      `;
+    }
+    if (mostActiveDriver) {
+      html += `
+      <div class="stat-card"><div class="stat-icon">🏆</div>
+        <div class="stat-value">${mostActiveDriver}</div>
+        <div class="stat-label">Most Active (${maxTrips})</div>
+      </div>
+      `;
+    }
+    statsPanel.innerHTML = html;
+  }
+
+  function updateCardDropdown() {
+    const dropdown = document.getElementById('cardRegistrationIn');
+    dropdown.innerHTML = '<option value="">Select Vehicle Registration</option>';
+    outRecords.forEach(record => {
+      const option = document.createElement('option');
+      option.value = record.cardRegistration;
+      option.textContent = `${record.cardRegistration} - ${record.driverName}`;
+      dropdown.appendChild(option);
+    });
+  }
+
+  function addOutRecordToTable(record) {
+    const tbody = document.getElementById('outRecordsBody');
+    const row = tbody.insertRow(0);
+    row.innerHTML = `
+      <td>${record.cardRegistration}</td>
+      <td>${record.driverName}</td>
+      <td>${formatDateTime(record.dateTimeOut)}</td>
+      <td><span class="status-badge status-out">Out</span></td>
+    `;
+  }
+
+  function addCompletedRecordToTable(record) {
+    const tbody = document.getElementById('inRecordsBody');
+    const row = tbody.insertRow(0);
+    row.innerHTML = `
+      <td>${record.cardRegistration}</td>
+      <td>${record.driverName}</td>
+      <td>${formatDateTime(record.dateTimeOut)}</td>
+      <td>${formatDateTime(record.dateTimeIn)}</td>
+      <td>${parseFloat(record.distanceTraveled).toFixed(1)} km</td>
+      <td>R${parseFloat(record.fuelAmount).toFixed(2)}</td>
+    `;
+  }
+
+  function refreshTables() {
+    const outRecordsBody = document.getElementById('outRecordsBody');
+    const inRecordsBody = document.getElementById('inRecordsBody');
+    outRecordsBody.innerHTML = '';
+    inRecordsBody.innerHTML = '';
+    if (outRecords.length === 0) {
+      outRecordsBody.innerHTML = '<tr><td colspan="4" class="empty-table-message">No vehicles currently checked out.</td></tr>';
+    } else {
+      outRecords.forEach(addOutRecordToTable);
+    }
+    if (completedRecords.length === 0) {
+      inRecordsBody.innerHTML = '<tr><td colspan="6" class="empty-table-message">No completed trips yet.</td></tr>';
+    } else {
+      completedRecords.forEach(addCompletedRecordToTable);
+    }
+    updateCardDropdown();
+    renderStats();
+  }
+
+  // =============== Firestore Data Functions ===============
+  async function loadFromFirestore() {
+    try {
+      const outSnapshot = await getDocs(collection(db, 'outRecords'));
+      const inSnapshot = await getDocs(collection(db, 'completedRecords'));
+
+      outRecords = outSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      completedRecords = inSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Remove last month’s records
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      completedRecords = completedRecords.filter(record => {
+        const dateIn = new Date(record.dateTimeIn);
+        return !(dateIn.getMonth() === (currentMonth === 0 ? 11 : currentMonth - 1) &&
+                 dateIn.getFullYear() === (currentMonth === 0 ? currentYear - 1 : currentYear));
+      });
+
+      refreshTables();
+    } catch (err) {
+      console.error("Firestore load error:", err);
+      alert("Failed to load data from cloud.");
+    }
+  }
+
+  async function addOutRecord(record) {
+    await addDoc(collection(db, 'outRecords'), record);
+  }
+
+  async function completeTrip(outRecordId, completedRecord) {
+    await deleteDoc(doc(db, 'outRecords', outRecordId));
+    await addDoc(collection(db, 'completedRecords'), completedRecord);
+  }
+
+  async function clearAllDataFromFirestore() {
+    const outDocs = await getDocs(collection(db, 'outRecords'));
+    const inDocs = await getDocs(collection(db, 'completedRecords'));
+    const deleteOutPromises = outDocs.docs.map(doc => deleteDoc(doc.ref));
+    const deleteInPromises = inDocs.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all([...deleteOutPromises, ...deleteInPromises]);
+  }
+
+  // =============== Auth & UI ===============
+  const loginModal = document.getElementById('loginModal');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginError = document.getElementById('loginError');
+  const loginBtn = document.getElementById('loginBtn');
+
+  function showLoginModal() {
+    loginModal.style.display = 'flex';
+    loginError.textContent = '';
+  }
+
+  function hideLoginModal() {
+    loginModal.style.display = 'none';
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
+    if (!email || !password) {
+      loginError.textContent = "Please enter email and password";
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      hideLoginModal();
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
+        loginError.textContent = "Invalid email or password";
+      } else {
+        loginError.textContent = "Login failed. Please try again.";
+      }
+      setTimeout(() => { loginError.textContent = ''; }, 3000);
+    }
+  });
+
+  loginPassword.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      loginBtn.click();
+    }
+  });
+
+  // Monitor auth state
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      isAdmin = user.email === "it@superbhyper.co.za"; // Only this user is admin
+
+      // Hide admin section for non-admins
+      document.getElementById('statsHeader').closest('.collapsible-section').style.display = isAdmin ? 'block' : 'none';
+
+      await loadFromFirestore();
+    } else {
+      showLoginModal();
+    }
+  });
+
+  // =============== Event Listeners ===============
+  document.getElementById('vehicleOutForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const cardReg = document.getElementById('cardRegistrationOut').value.trim();
+    if (outRecords.some(r => r.cardRegistration === cardReg)) {
+      alert('Vehicle already checked out!');
+      return;
+    }
+
+    const record = {
+      cardRegistration: cardReg,
+      driverName: document.getElementById('driverNameOut').value,
+      dateTimeOut: document.getElementById('dateTimeOut').value,
+      timestamp: new Date().toISOString()
+    };
+
+    await addOutRecord(record);
+    outRecords.push(record);
+    refreshTables();
+    this.reset();
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('dateTimeOut').value = now.toISOString().slice(0, 16);
+    alert('Vehicle checked out successfully!');
+  });
+
+  document.getElementById('fuelAmount').addEventListener('input', function() {
+    const fuelAmount = parseFloat(this.value) || 0;
+    const errorDiv = document.getElementById('fuelAmountError');
+    if (fuelAmount > 2500) {
+      errorDiv.style.display = 'block';
+      this.style.borderColor = '#c53030';
+    } else {
+      errorDiv.style.display = 'none';
+      this.style.borderColor = '#e1e8ed';
+    }
+  });
+
+  document.getElementById('vehicleInForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const cardReg = document.getElementById('cardRegistrationIn').value;
+    const fuelAmount = parseFloat(document.getElementById('fuelAmount').value) || 0;
+
+    if (fuelAmount > 2500) {
+      alert('Fuel amount cannot exceed R2500!');
+      return;
+    }
+
+    const outRecord = outRecords.find(r => r.cardRegistration === cardReg);
+    if (!outRecord) return alert('No checkout found!');
+
+    const dateTimeIn = document.getElementById('dateTimeIn').value;
+    if (new Date(dateTimeIn) <= new Date(outRecord.dateTimeOut)) {
+      return alert('Check-in time must be after check-out!');
+    }
+
+    const mileageIn = parseFloat(document.getElementById('mileageIn').value);
+    if (isNaN(mileageIn)) return alert('Enter valid mileage.');
+
+    const lastTrip = completedRecords
+      .filter(r => r.cardRegistration === cardReg)
+      .sort((a, b) => new Date(b.dateTimeIn) - new Date(a.dateTimeIn))[0];
+
+    const lastMileage = lastTrip ? parseFloat(lastTrip.mileageIn) : 0;
+    if (mileageIn < lastMileage) {
+      return alert(`Mileage cannot be less than ${lastMileage} km.`);
+    }
+
+    if (lastMileage > 0 && Math.abs(mileageIn - lastMileage) > 100) {
+      if (!confirm(`Last mileage: ${lastMileage} km\nYou entered: ${mileageIn} km\nConfirm?`)) return;
+    }
+
+    const distance = mileageIn - lastMileage;
+    const completedRecord = {
+      ...outRecord,
+      mileageIn: mileageIn,
+      lastMileageIn: lastMileage,
+      distanceTraveled: distance,
+      dateTimeIn: dateTimeIn,
+      fuelAmount: fuelAmount.toString(),
+      completedTimestamp: new Date().toISOString()
+    };
+
+    await completeTrip(outRecord.id, completedRecord);
+
+    outRecords = outRecords.filter(r => r.cardRegistration !== cardReg);
+    completedRecords.push(completedRecord);
+    refreshTables();
+    this.reset();
+    document.getElementById('driverNameIn').value = '';
+    document.getElementById('mileageHint').style.display = 'none';
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('dateTimeIn').value = now.toISOString().slice(0, 16);
+    alert('Vehicle checked in successfully!');
+  });
+
+  document.getElementById('cardRegistrationIn').addEventListener('change', function() {
+    const selectedCard = this.value;
+    const outRecord = outRecords.find(record => record.cardRegistration === selectedCard);
+    document.getElementById('driverNameIn').value = outRecord ? outRecord.driverName : '';
+    const lastTrip = completedRecords
+      .filter(record => record.cardRegistration === selectedCard)
+      .sort((a, b) => new Date(b.dateTimeIn) - new Date(a.dateTimeIn))[0];
+    const lastMileage = lastTrip ? parseFloat(lastTrip.mileageIn) : 0;
+    const hint = document.getElementById('mileageHint');
+    if (lastMileage > 0) {
+      hint.textContent = `Last recorded: ${lastMileage} km`;
+      hint.style.display = 'block';
+      document.getElementById('mileageIn').value = lastMileage.toFixed(1);
+    } else {
+      hint.style.display = 'none';
+      document.getElementById('mileageIn').value = '0';
+    }
+  });
+
+  document.getElementById('clearAllBtn').addEventListener('click', async function() {
+    if (!isAdmin) {
+      alert("Admin access required.");
+      return;
+    }
+    if (confirm('Are you sure you want to CLEAR ALL data? This cannot be undone.')) {
+      await clearAllDataFromFirestore();
+      outRecords = [];
+      completedRecords = [];
+      refreshTables();
+      alert('All records cleared!');
+    }
+  });
+
+  // --- Export Functions ---
+  function calculateExportTotals(records) {
+    let totalMileage = 0;
+    let totalFuel = 0;
+    let totalDistance = 0;
+    records.forEach(record => {
+      totalMileage += parseFloat(record.mileageIn || 0);
+      totalFuel += parseFloat(record.fuelAmount || 0);
+      totalDistance += parseFloat(record.distanceTraveled || 0);
+    });
+    return {
+      totalMileage: totalMileage.toFixed(1),
+      totalFuel: totalFuel.toFixed(2),
+      totalDistance: totalDistance.toFixed(1)
+    };
+  }
+
+  function exportLifeToDateCSV() {
+    let csv = "Vehicle Reg,Driver,Month,Date Out,Date In,Mileage In,Fuel Amount,Distance Traveled\n";
+    completedRecords.forEach(record => {
+      const dateOut = new Date(record.dateTimeOut);
+      const monthOut = dateOut.toLocaleString('default', { month: 'long' });
+      csv += `"${record.cardRegistration}","${record.driverName}","${monthOut}","${formatDateTime(record.dateTimeOut)}","${formatDateTime(record.dateTimeIn)}",${parseFloat(record.mileageIn).toFixed(1)},"R${parseFloat(record.fuelAmount).toFixed(2)}",${parseFloat(record.distanceTraveled || 0).toFixed(1)}\n`;
+    });
+    const totals = calculateExportTotals(completedRecords);
+    csv += `\nTotal,,,"","","${totals.totalMileage}","R${totals.totalFuel}","${totals.totalDistance}"\n`;
+    downloadCSV(csv, "fleet_life_to_date.csv");
+  }
+
+  function exportMonthToDateCSV() {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    const monthRecords = completedRecords.filter(record => {
+      const recordDate = new Date(record.dateTimeIn);
+      return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+    });
+    let csv = "Vehicle Reg,Driver,Month,Date Out,Date In,Mileage In,Fuel Amount,Distance Traveled\n";
+    monthRecords.forEach(record => {
+      const dateOut = new Date(record.dateTimeOut);
+      const monthOut = dateOut.toLocaleString('default', { month: 'long' });
+      csv += `"${record.cardRegistration}","${record.driverName}","${monthOut}","${formatDateTime(record.dateTimeOut)}","${formatDateTime(record.dateTimeIn)}",${parseFloat(record.mileageIn).toFixed(1)},"R${parseFloat(record.fuelAmount).toFixed(2)}",${parseFloat(record.distanceTraveled || 0).toFixed(1)}\n`;
+    });
+    const totals = calculateExportTotals(monthRecords);
+    csv += `\nTotal,,,"","","${totals.totalMileage}","R${totals.totalFuel}","${totals.totalDistance}"\n`;
+    const filename = `fleet_${currentDate.toLocaleString('default', { month: 'long' })}_${currentYear}.csv`;
+    downloadCSV(csv, filename);
+  }
+
+  function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('exportCsvBtn').addEventListener('click', () => {
+    exportModal.style.display = 'flex';
+  });
+  document.getElementById('exportLifeToDateBtn').addEventListener('click', () => {
+    exportModal.style.display = 'none';
+    exportLifeToDateCSV();
+  });
+  document.getElementById('exportMonthToDateBtn').addEventListener('click', () => {
+    exportModal.style.display = 'none';
+    exportMonthToDateCSV();
+  });
+  document.getElementById('exportCancelBtn').addEventListener('click', () => exportModal.style.display = 'none');
+
+  // --- Accordion Logic ---
+  document.querySelectorAll('.collapsible-section .section-header').forEach(header => {
+    header.addEventListener('click', function() {
+      const content = this.nextElementSibling;
+      this.classList.toggle('active');
+      content.classList.toggle('active');
+    });
+  });
+
+  // --- Init ---
+  document.addEventListener('DOMContentLoaded', async () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const iso = now.toISOString().slice(0, 16);
+    document.getElementById('dateTimeOut').value = iso;
+    document.getElementById('dateTimeIn').value = iso;
+
+    // Register Service Worker only if not file://
+    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    if (window.innerWidth <= 768) {
+      document.querySelectorAll('.collapsible-section .collapsible-content').forEach(content => {
+        content.classList.remove('active');
+        content.previousElementSibling.classList.remove('active');
+      });
+    }
+  });
+
+  window.addEventListener('click', function(event) {
+    if (event.target === loginModal) hideLoginModal();
+    if (event.target === exportModal) exportModal.style.display = 'none';
+  });
+</script>
+</body>
+</html>
