@@ -669,7 +669,7 @@
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
-      isAdmin = user.email === "it@superbhyper.co.za"; // Only this user is admin
+      isAdmin = user.email === "it.superbhyper@gmail.com"; // Only this user is admin
 
       // Hide admin section for non-admins
       document.getElementById('statsHeader').closest('.collapsible-section').style.display = isAdmin ? 'block' : 'none';
